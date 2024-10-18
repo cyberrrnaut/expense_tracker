@@ -13,13 +13,13 @@ class ExpenseProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addExpense(Expense expense) async {
-    await apiService.addExpense(expense);
-    await fetchExpenses(); // Refresh the list after adding
+  Future<void> addExpense(String description, double amount, String date) async {
+    await apiService.addExpense(description, amount, date);
+    await fetchExpenses(); // Refresh list after adding
   }
 
   Future<void> deleteExpense(int id) async {
     await apiService.deleteExpense(id);
-    await fetchExpenses(); // Refresh the list after deletion
+    await fetchExpenses(); // Refresh list after deleting
   }
 }

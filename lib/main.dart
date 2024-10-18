@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'providers/expense_provider.dart';
-import 'models/expense.dart';
+import './providers/expense_provider.dart';
+import './screens/expense_list_screen.dart';
+import './screens/add_expense_screen.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => ExpenseProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ExpenseProvider()),
+      ],
       child: MyApp(),
     ),
   );
@@ -17,101 +20,43 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Expense Tracker',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: ExpenseListScreen(),
+      theme: ThemeData.dark(), // Dark theme
+      home: HomeScreen(),
     );
   }
 }
 
-class ExpenseListScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    final expenseProvider = Provider.of<ExpenseProvider>(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Expense Tracker'),
-      ),
-      body: FutureBuilder(
-        future: expenseProvider.fetchExpenses(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else {
-            return ListView.builder(
-              itemCount: expenseProvider.expenses.length,
-              itemBuilder: (context, index) {
-                final expense = expenseProvider.expenses[index];
-                return ListTile(
-                  title: Text(expense.description),
-                  subtitle: Text('${expense.amount} on ${expense.date}'),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete),
-                    onPressed: () {
-                      expenseProvider.deleteExpense(expense.id);
-                    },
-                  ),
-                );
-              },
-            );
-          }
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddExpenseDialog(context),
-        child: Icon(Icons.add),
-      ),
-    );
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
+
+  static List<Widget> _pages = <Widget>[
+    ExpenseListScreen(),
+    AddExpenseScreen(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
-  void _showAddExpenseDialog(BuildContext context) {
-    final descriptionController = TextEditingController();
-    final amountController = TextEditingController();
-    final dateController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Add Expense'),
-          content: Column(
-            children: [
-              TextField(
-                controller: descriptionController,
-                decoration: InputDecoration(labelText: 'Description'),
-              ),
-              TextField(
-                controller: amountController,
-                decoration: InputDecoration(labelText: 'Amount'),
-                keyboardType: TextInputType.number,
-              ),
-              TextField(
-                controller: dateController,
-                decoration: InputDecoration(labelText: 'Date (YYYY-MM-DD)'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                final newExpense = Expense(
-                  id: 0, // Will be ignored during the insert
-                  description: descriptionController.text,
-                  amount: double.parse(amountController.text),
-                  date: dateController.text,
-                );
-                Provider.of<ExpenseProvider>(context, listen: false)
-                    .addExpense(newExpense);
-                Navigator.of(context).pop();
-              },
-              child: Text('Add'),
-            ),
-          ],
-        );
-      },
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _pages[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Expenses'),
+          BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Add Expense'),
+        ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+      ),
     );
   }
 }
