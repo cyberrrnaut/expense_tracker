@@ -1,13 +1,9 @@
+import 'package:expense_tracker/screens/expense_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/expense_provider.dart';
 
-class AddExpenseScreen extends StatefulWidget {
-  @override
-  _AddExpenseScreenState createState() => _AddExpenseScreenState();
-}
-
-class _AddExpenseScreenState extends State<AddExpenseScreen> {
+class AddExpenseScreen extends StatelessWidget {
   final _descriptionController = TextEditingController();
   final _amountController = TextEditingController();
   final _dateController = TextEditingController();
@@ -17,7 +13,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Add Expense')),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             TextField(
@@ -31,19 +27,24 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             ),
             TextField(
               controller: _dateController,
-              decoration: InputDecoration(labelText: 'Date (YYYY-MM-DD)'),
+              decoration: InputDecoration(labelText: 'Date (yyyy-mm-dd)'),
             ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
                 final description = _descriptionController.text;
-                final amount = double.parse(_amountController.text);
+                final amount = double.tryParse(_amountController.text) ?? 0.0;
                 final date = _dateController.text;
 
-                await Provider.of<ExpenseProvider>(context, listen: false)
-                    .addExpense(description, amount, date);
+                if (description.isNotEmpty && date.isNotEmpty && amount > 0) {
+ 
+                   await Provider.of<ExpenseProvider>(context, listen: false)
+                      .addExpense(description, amount, date);
 
-                Navigator.pop(context); // Go back to list after adding
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => ExpenseListScreen()),
+                  );
+                }
               },
               child: Text('Add Expense'),
             ),
